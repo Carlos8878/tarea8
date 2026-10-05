@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Gestión</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; }
+    h1 { text-align: center; padding: 20px; color: #00d4ff; font-size: 1.8rem; }
+
+    .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab { padding: 10px 25px; border-radius: 20px; cursor: pointer; background: #16213e; color: #aaa; border: 2px solid transparent; font-weight: bold; }
+    .tab.active { background: #00d4ff; color: #000; }
+
+    .section { display: none; max-width: 950px; margin: 0 auto; padding: 0 20px 40px; }
+    .section.active { display: block; }
+
+    .card { background: #16213e; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+    .card h2 { color: #00d4ff; margin-bottom: 15px; font-size: 1.1rem; }
+
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; }
+    input, select { padding: 9px; border-radius: 6px; border: none; background: #0f3460; color: #eee; width: 100%; }
+    input::placeholder { color: #888; }
+
+    .btn { padding: 9px 18px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+    .btn-primary { background: #00d4ff; color: #000; }
+    .btn-danger { background: #ff4757; color: #fff; }
+    .btn-warning { background: #ffa502; color: #000; }
+    .btn-success { background: #2ed573; color: #000; }
+    .btn:hover { opacity: 0.85; }
+
+    .resultado { margin-top: 15px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #00d4ff; color: #000; padding: 10px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #0f3460; vertical-align: middle; }
+    tr:hover { background: #0f3460; }
+    .actions { display: flex; gap: 8px; }
+
+    .msg { padding: 10px; border-radius: 6px; margin-top: 10px; }
+    .msg.ok { background: #2ed57322; color: #2ed573; border: 1px solid #2ed573; }
+    .msg.err { background: #ff475722; color: #ff4757; border: 1px solid #ff4757; }
+
+    .badge { padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; }
+    .badge-red { background: #ff475722; color: #ff4757; }
+    .badge-green { background: #2ed57322; color: #2ed573; }
+  </style>
+</head>
+<body>
+
+<h1>Sistema de Gestión de Clientes y Pedidos</h1>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('clientes')">Clientes</div>
+  <div class="tab" onclick="showTab('productos')">Productos</div>
+  <div class="tab" onclick="showTab('pedidos')">Pedidos</div>
+  <div class="tab" onclick="showTab('consultas')">Consultas</div>
+</div>
+
+<!-- CLIENTES -->
+<div class="section active" id="tab-clientes">
+  <div class="card">
+    <h2 id="form-cliente-titulo">Agregar Cliente</h2>
+    <input type="hidden" id="cliente-id">
+    <div class="form-grid">
+      <input type="text" id="c-nombre" placeholder="Nombre completo">
+      <input type="email" id="c-correo" placeholder="Correo">
+      <input type="text" id="c-ciudad" placeholder="Ciudad">
+      <input type="number" id="c-edad" placeholder="Edad">
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary" onclick="guardarCliente()">Guardar</button>
+      <button class="btn btn-warning" onclick="cancelarEdicionCliente()" id="btn-cancelar-cliente" style="display:none">Cancelar</button>
+    </div>
+    <div id="msg-cliente"></div>
+  </div>
+
+  <div class="card">
+    <h2>Lista de Clientes</h2>
+    <button class="btn btn-primary" onclick="cargarClientes()" style="margin-bottom:15px">Actualizar lista</button>
+    <div class="resultado" id="lista-clientes"></div>
+  </div>
+</div>
+
+<!-- PRODUCTOS -->
+<div class="section" id="tab-productos">
+  <div class="card">
+    <h2 id="form-producto-titulo">Agregar Producto</h2>
+    <input type="hidden" id="producto-id">
+    <div class="form-grid">
+      <input type="text" id="p-nombre" placeholder="Nombre del producto">
+      <input type="number" id="p-precio" placeholder="Precio">
+      <input type="number" id="p-stock" placeholder="Stock">
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary" onclick="guardarProducto()">Guardar</button>
+      <button class="btn btn-warning" onclick="cancelarEdicionProducto()" id="btn-cancelar-producto" style="display:none">Cancelar</button>
+    </div>
+    <div id="msg-producto"></div>
+  </div>
+
+  <div class="card">
+    <h2>Lista de Productos</h2>
+    <button class="btn btn-primary" onclick="cargarProductos()" style="margin-bottom:15px">Actualizar lista</button>
+    <div class="resultado" id="lista-productos"></div>
+  </div>
+</div>
+
+<!-- PEDIDOS -->
+<div class="section" id="tab-pedidos">
+  <div class="card">
+    <h2>Registrar Pedido</h2>
+    <div class="form-grid">
+      <select id="ped-cliente"><option value="">Selecciona cliente</option></select>
+      <select id="ped-producto"><option value="">Selecciona producto</option></select>
+      <input type="number" id="ped-cantidad" placeholder="Cantidad" min="1">
+    </div>
+    <button class="btn btn-primary" onclick="registrarPedido()">Registrar Pedido</button>
+    <div id="msg-pedido"></div>
+  </div>
+
+  <div class="card">
+    <h2>Lista de Pedidos</h2>
+    <button class="btn btn-primary" onclick="cargarPedidos()" style="margin-bottom:15px">Actualizar lista</button>
+    <div class="resultado" id="lista-pedidos"></div>
+  </div>
+</div>
+
+<!-- CONSULTAS -->
+<div class="section" id="tab-consultas">
+  <div class="card">
+    <h2>Clientes Frecuentes (2+ pedidos)</h2>
+    <button class="btn btn-primary" onclick="clientesFrecuentes()">Consultar</button>
+    <div class="resultado" id="res-frecuentes"></div>
+  </div>
+
+  <div class="card">
+    <h2>Stock Crítico (menor a 5)</h2>
+    <button class="btn btn-primary" onclick="stockCritico()">Consultar</button>
+    <div class="resultado" id="res-stock"></div>
+  </div>
+
+  <div class="card">
+    <h2>Pedidos por Ciudad</h2>
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+      <input type="text" id="ciudad" placeholder="Ej: Arequipa" style="max-width:200px">
+      <button class="btn btn-primary" onclick="pedidosCiudad()">Buscar</button>
+    </div>
+    <div class="resultado" id="res-ciudad"></div>
+  </div>
+
+  <div class="card">
+    <h2>Ticket Promedio por Cliente</h2>
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+      <input type="text" id="cliente-ticket" placeholder="Nombre del cliente" style="max-width:200px">
+      <button class="btn btn-primary" onclick="ticketPromedio()">Calcular</button>
+    </div>
+    <div class="resultado" id="res-ticket"></div>
+  </div>
+
+  <div class="card">
+    <h2>Cambiar Ciudad: Arequipa → Lima</h2>
+    <button class="btn btn-warning" onclick="cambiarCiudad()">Ejecutar actualización masiva</button>
+    <div class="resultado" id="res-ciudad-masiva"></div>
+  </div>
+</div>
+
+<script>
+  // TAB NAVIGATION
+  function showTab(tab) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    event.target.classList.add('active');
+    if (tab === 'clientes') cargarClientes();
+    if (tab === 'productos') cargarProductos();
+    if (tab === 'pedidos') { cargarPedidos(); cargarSelectores(); }
+  }
+
+  function showMsg(id, texto, tipo) {
+    const el = document.getElementById(id);
+    el.innerHTML = `<div class="msg ${tipo}">${texto}</div>`;
+    setTimeout(() => el.innerHTML = '', 3000);
+  }
+
+  // ===== CLIENTES =====
+  async function cargarClientes() {
+    const res = await fetch('/api/clientes');
+    const data = await res.json();
+    const div = document.getElementById('lista-clientes');
+    if (!data.length) { div.innerHTML = '<p>No hay clientes.</p>'; return; }
+    div.innerHTML = `<table>
+      <tr><th>Nombre</th><th>Correo</th><th>Ciudad</th><th>Edad</th><th>Acciones</th></tr>
+      ${data.map(c => `<tr>
+        <td>${c.nombre}</td><td>${c.correo}</td><td>${c.ciudad}</td><td>${c.edad}</td>
+        <td class="actions">
+          <button class="btn btn-warning" onclick="editarCliente('${c._id}','${c.nombre}','${c.correo}','${c.ciudad}',${c.edad})">Editar</button>
+          <button class="btn btn-danger" onclick="eliminarCliente('${c._id}')">Eliminar</button>
+        </td>
+      </tr>`).join('')}
+    </table>`;
+  }
+
+  async function guardarCliente() {
+    const id = document.getElementById('cliente-id').value;
+    const body = {
+      nombre: document.getElementById('c-nombre').value,
+      correo: document.getElementById('c-correo').value,
+      ciudad: document.getElementById('c-ciudad').value,
+      edad: document.getElementById('c-edad').value
+    };
+    if (!body.nombre || !body.correo || !body.ciudad || !body.edad) {
+      showMsg('msg-cliente', 'Completa todos los campos.', 'err'); return;
+    }
+    const url = id ? `/api/clientes/${id}` : '/api/clientes';
+    const method = id ? 'PUT' : 'POST';
+    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    showMsg('msg-cliente', id ? 'Cliente actualizado.' : 'Cliente agregado.', 'ok');
+    cancelarEdicionCliente();
+    cargarClientes();
+  }
+
+  function editarCliente(id, nombre, correo, ciudad, edad) {
+    document.getElementById('cliente-id').value = id;
+    document.getElementById('c-nombre').value = nombre;
+    document.getElementById('c-correo').value = correo;
+    document.getElementById('c-ciudad').value = ciudad;
+    document.getElementById('c-edad').value = edad;
+    document.getElementById('form-cliente-titulo').textContent = 'Editar Cliente';
+    document.getElementById('btn-cancelar-cliente').style.display = 'inline-block';
+  }
+
+  function cancelarEdicionCliente() {
+    document.getElementById('cliente-id').value = '';
+    document.getElementById('c-nombre').value = '';
+    document.getElementById('c-correo').value = '';
+    document.getElementById('c-ciudad').value = '';
+    document.getElementById('c-edad').value = '';
+    document.getElementById('form-cliente-titulo').textContent = 'Agregar Cliente';
+    document.getElementById('btn-cancelar-cliente').style.display = 'none';
+  }
+
+  async function eliminarCliente(id) {
+    if (!confirm('¿Eliminar este cliente?')) return;
+    await fetch(`/api/clientes/${id}`, { method: 'DELETE' });
+    showMsg('msg-cliente', 'Cliente eliminado.', 'ok');
+    cargarClientes();
+  }
+
+  // ===== PRODUCTOS =====
+  async function cargarProductos() {
+    const res = await fetch('/api/productos');
+    const data = await res.json();
+    const div = document.getElementById('lista-productos');
+    if (!data.length) { div.innerHTML = '<p>No hay productos.</p>'; return; }
+    div.innerHTML = `<table>
+      <tr><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr>
+      ${data.map(p => `<tr>
+        <td>${p.nombre}</td><td>$${p.precio}</td>
+        <td><span class="badge ${p.stock < 5 ? 'badge-red' : 'badge-green'}">${p.stock}</span></td>
+        <td class="actions">
+          <button class="btn btn-warning" onclick="editarProducto('${p._id}','${p.nombre}',${p.precio},${p.stock})">Editar</button>
+          <button class="btn btn-danger" onclick="eliminarProducto('${p._id}')">Eliminar</button>
+        </td>
+      </tr>`).join('')}
+    </table>`;
+  }
+
+  async function guardarProducto() {
+    const id = document.getElementById('producto-id').value;
+    const body = {
+      nombre: document.getElementById('p-nombre').value,
+      precio: document.getElementById('p-precio').value,
+      stock: document.getElementById('p-stock').value
+    };
+    if (!body.nombre || !body.precio || !body.stock) {
+      showMsg('msg-producto', 'Completa todos los campos.', 'err'); return;
+    }
+    const url = id ? `/api/productos/${id}` : '/api/productos';
+    const method = id ? 'PUT' : 'POST';
+    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    showMsg('msg-producto', id ? 'Producto actualizado.' : 'Producto agregado.', 'ok');
+    cancelarEdicionProducto();
+    cargarProductos();
+  }
+
+  function editarProducto(id, nombre, precio, stock) {
+    document.getElementById('producto-id').value = id;
+    document.getElementById('p-nombre').value = nombre;
+    document.getElementById('p-precio').value = precio;
+    document.getElementById('p-stock').value = stock;
+    document.getElementById('form-producto-titulo').textContent = 'Editar Producto';
+    document.getElementById('btn-cancelar-producto').style.display = 'inline-block';
+  }
+
+  function cancelarEdicionProducto() {
+    document.getElementById('producto-id').value = '';
+    document.getElementById('p-nombre').value = '';
+    document.getElementById('p-precio').value = '';
+    document.getElementById('p-stock').value = '';
+    document.getElementById('form-producto-titulo').textContent = 'Agregar Producto';
+    document.getElementById('btn-cancelar-producto').style.display = 'none';
+  }
+
+  async function eliminarProducto(id) {
+    if (!confirm('¿Eliminar este producto?')) return;
+    await fetch(`/api/productos/${id}`, { method: 'DELETE' });
+    showMsg('msg-producto', 'Producto eliminado.', 'ok');
+    cargarProductos();
+  }
+
+  // ===== PEDIDOS =====
+  async function cargarSelectores() {
+    const [rc, rp] = await Promise.all([fetch('/api/clientes'), fetch('/api/productos')]);
+    const [clientes, productos] = await Promise.all([rc.json(), rp.json()]);
+    document.getElementById('ped-cliente').innerHTML =
+      '<option value="">Selecciona cliente</option>' +
+      clientes.map(c => `<option value="${c._id}">${c.nombre}</option>`).join('');
+    document.getElementById('ped-producto').innerHTML =
+      '<option value="">Selecciona producto</option>' +
+      productos.map(p => `<option value="${p._id}">${p.nombre} (stock: ${p.stock})</option>`).join('');
+  }
+
+  async function registrarPedido() {
+    const idCliente = document.getElementById('ped-cliente').value;
+    const idProducto = document.getElementById('ped-producto').value;
+    const cantidad = parseInt(document.getElementById('ped-cantidad').value);
+    if (!idCliente || !idProducto || !cantidad) {
+      showMsg('msg-pedido', 'Completa todos los campos.', 'err'); return;
+    }
+    const res = await fetch('/api/pedidos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idCliente, productos: [{ idProducto, cantidad }] })
+    });
+    const data = await res.json();
+    if (data.error) { showMsg('msg-pedido', data.error, 'err'); return; }
+    showMsg('msg-pedido', 'Pedido registrado correctamente.', 'ok');
+    cargarPedidos();
+    cargarSelectores();
+  }
+
+  async function cargarPedidos() {
+    const res = await fetch('/api/pedidos');
+    const data = await res.json();
+    const div = document.getElementById('lista-pedidos');
+    if (!data.length) { div.innerHTML = '<p>No hay pedidos.</p>'; return; }
+    div.innerHTML = `<table>
+      <tr><th>Cliente</th><th>Ciudad</th><th>Productos</th><th>Fecha</th><th>Acciones</th></tr>
+      ${data.map(p => `<tr>
+        <td>${p.idCliente?.nombre || 'N/A'}</td>
+        <td>${p.idCliente?.ciudad || 'N/A'}</td>
+        <td>${p.productos.map(i => `${i.idProducto?.nombre || 'N/A'} x${i.cantidad}`).join(', ')}</td>
+        <td>${new Date(p.fecha).toLocaleDateString()}</td>
+        <td><button class="btn btn-danger" onclick="eliminarPedido('${p._id}')">Eliminar</button></td>
+      </tr>`).join('')}
+    </table>`;
+  }
+
+  async function eliminarPedido(id) {
+    if (!confirm('¿Eliminar este pedido?')) return;
+    await fetch(`/api/pedidos/${id}`, { method: 'DELETE' });
+    cargarPedidos();
+  }
+
+  // ===== CONSULTAS =====
+  async function clientesFrecuentes() {
+    const res = await fetch('/api/clientes-frecuentes');
+    const data = await res.json();
+    const div = document.getElementById('res-frecuentes');
+    if (!data.length) { div.innerHTML = '<p>No hay clientes frecuentes.</p>'; return; }
+    div.innerHTML = `<table><tr><th>Nombre</th><th>Total Pedidos</th></tr>
+      ${data.map(c => `<tr><td>${c.nombre}</td><td>${c.totalPedidos}</td></tr>`).join('')}
+    </table>`;
+  }
+
+  async function stockCritico() {
+    const res = await fetch('/api/stock-critico');
+    const data = await res.json();
+    const div = document.getElementById('res-stock');
+    if (!data.length) { div.innerHTML = '<p>No hay productos con stock crítico.</p>'; return; }
+    div.innerHTML = `<table><tr><th>Producto</th><th>Stock</th></tr>
+      ${data.map(p => `<tr><td>${p.nombre}</td><td><span class="badge badge-red">${p.stock}</span></td></tr>`).join('')}
+    </table>`;
+  }
+
+  async function pedidosCiudad() {
+    const ciudad = document.getElementById('ciudad').value;
+    const res = await fetch(`/api/pedidos-ciudad/${ciudad}`);
+    const data = await res.json();
+    const div = document.getElementById('res-ciudad');
+    if (!data.length) { div.innerHTML = '<p>No hay pedidos para esa ciudad.</p>'; return; }
+    div.innerHTML = `<table><tr><th>Cliente</th><th>Ciudad</th><th>Fecha</th></tr>
+      ${data.map(p => `<tr><td>${p.idCliente.nombre}</td><td>${p.idCliente.ciudad}</td><td>${new Date(p.fecha).toLocaleDateString()}</td></tr>`).join('')}
+    </table>`;
+  }
+
+  async function ticketPromedio() {
+    const nombre = document.getElementById('cliente-ticket').value;
+    const res = await fetch(`/api/ticket-promedio/${nombre}`);
+    const data = await res.json();
+    const div = document.getElementById('res-ticket');
+    if (data.error) { div.innerHTML = `<p>${data.error}</p>`; return; }
+    div.innerHTML = `<p>Cliente: <strong>${data.cliente}</strong> — Gasto promedio: <strong>$${data.promedio}</strong></p>`;
+  }
+
+  async function cambiarCiudad() {
+    if (!confirm('¿Cambiar todos los clientes de Arequipa a Lima?')) return;
+    const res = await fetch('/api/cambiar-ciudad', { method: 'PUT' });
+    const data = await res.json();
+    document.getElementById('res-ciudad-masiva').innerHTML =
+      `<div class="msg ok">Clientes actualizados: ${data.modifiedCount}</div>`;
+  }
+
+  // Cargar clientes al inicio
+  cargarClientes();
+</script>
+</body>
+</html>
